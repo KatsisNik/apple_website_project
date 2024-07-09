@@ -1,8 +1,6 @@
 import gsap from "gsap";
-import { useGSAP } from "@gsap/react";
-import { ScrollTrigger } from "gsap/all";
 import { useEffect, useRef, useState } from "react";
-
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { hightlightsSlides } from "@/constants";
 import { pauseImg, playImg, replayImg } from "@/utils";
 
@@ -17,9 +15,9 @@ interface VideoState {
 }
 
 const VideoCarousel: React.FC = () => {
-  const videoRef = useRef<HTMLVideoElement[]>([]);
-  const videoSpanRef = useRef<HTMLSpanElement[]>([]);
-  const videoDivRef = useRef<HTMLDivElement[]>([]);
+  const videoRef = useRef<(HTMLVideoElement | null)[]>([]);
+  const videoSpanRef = useRef<(HTMLSpanElement | null)[]>([]);
+  const videoDivRef = useRef<(HTMLDivElement | null)[]>([]);
 
   const [video, setVideo] = useState<VideoState>({
     isEnd: false,
@@ -32,16 +30,16 @@ const VideoCarousel: React.FC = () => {
   const [loadedData, setLoadedData] = useState<Event[]>([]);
   const { isEnd, isLastVideo, startPlay, videoId, isPlaying } = video;
 
-  useGSAP(() => {
+  useEffect(() => {
     gsap.to("#slider", {
       transform: `translateX(${-100 * videoId}%)`,
       duration: 2,
       ease: "power2.inOut",
     });
 
-    gsap.to("#video", {
+    gsap.to(`#video-${videoId}`, {
       scrollTrigger: {
-        trigger: "#video",
+        trigger: `#video-${videoId}`,
         toggleActions: "restart none none none",
       },
       onComplete: () => {
@@ -59,14 +57,14 @@ const VideoCarousel: React.FC = () => {
     let span = videoSpanRef.current;
 
     if (span[videoId]) {
-      let anim = gsap.to(span[videoId], {
+      let anim = gsap.to(span[videoId]!, {
         onUpdate: () => {
           const progress = Math.ceil(anim.progress() * 100);
 
           if (progress !== currentProgress) {
             currentProgress = progress;
 
-            gsap.to(videoDivRef.current[videoId], {
+            gsap.to(videoDivRef.current[videoId]!, {
               width:
                 window.innerWidth < 760
                   ? "10vw"
@@ -75,7 +73,7 @@ const VideoCarousel: React.FC = () => {
                   : "4vw",
             });
 
-            gsap.to(span[videoId], {
+            gsap.to(span[videoId]!, {
               width: `${currentProgress}%`,
               backgroundColor: "white",
             });
@@ -84,10 +82,10 @@ const VideoCarousel: React.FC = () => {
 
         onComplete: () => {
           if (isPlaying) {
-            gsap.to(videoDivRef.current[videoId], {
+            gsap.to(videoDivRef.current[videoId]!, {
               width: "12px",
             });
-            gsap.to(span[videoId], {
+            gsap.to(span[videoId]!, {
               backgroundColor: "#afafaf",
             });
           }
@@ -99,10 +97,12 @@ const VideoCarousel: React.FC = () => {
       }
 
       const animUpdate = () => {
-        anim.progress(
-          videoRef.current[videoId].currentTime /
-            hightlightsSlides[videoId].videoDuration
-        );
+        if (videoRef.current[videoId]) {
+          anim.progress(
+            videoRef.current[videoId]!.currentTime /
+              hightlightsSlides[videoId].videoDuration
+          );
+        }
       };
 
       if (isPlaying) {
@@ -159,6 +159,18 @@ const VideoCarousel: React.FC = () => {
           videoId: 0,
           isLastVideo: false,
         }));
+        videoSpanRef.current.forEach((span) => {
+          if (span) {
+            gsap.set(span, { width: "0%", backgroundColor: "white" });
+          }
+        });
+        videoDivRef.current.forEach((div) => {
+          if (div) {
+            gsap.set(div, {
+              width: "12px",
+            });
+          }
+        });
         videoRef.current[0]?.play();
         break;
 
@@ -181,8 +193,10 @@ const VideoCarousel: React.FC = () => {
     }
   };
 
-  const handleLoadedMetaData = (i: number, e: Event) =>
-    setLoadedData((pre) => [...pre, e]);
+  const handleLoadedMetaData = (
+    i: number,
+    e: React.SyntheticEvent<HTMLVideoElement, Event>
+  ) => setLoadedData((pre) => [...pre, e.nativeEvent]);
 
   return (
     <>
@@ -192,20 +206,20 @@ const VideoCarousel: React.FC = () => {
             <div className="video-carousel_container">
               <div className="w-full h-full flex-center rounded-3xl overflow-hidden bg-black">
                 <video
-                  id="video"
+                  id={`video-${i}`}
                   playsInline
                   className={`${list.id === 2 && "translate-x-44"} pointer-events-none`}
                   preload="auto"
                   muted
-                  ref={(el) => (videoRef.current[i] = el!)}
+                  ref={(el) => {
+                    videoRef.current[i] = el;
+                  }}
                   onEnded={() =>
                     i !== hightlightsSlides.length - 1
                       ? handleProcess("video-end", i)
                       : handleProcess("video-last")
                   }
-                  onPlay={() =>
-                    setVideo((pre) => ({ ...pre, isPlaying: true }))
-                  }
+                  onPlay={() => setVideo((pre) => ({ ...pre, isPlaying: true }))}
                   onLoadedMetadata={(e) => handleLoadedMetaData(i, e)}
                 >
                   <source src={list.video} type="video/mp4" />
@@ -226,15 +240,23 @@ const VideoCarousel: React.FC = () => {
 
       <div className="relative flex-center mt-10">
         <div className="flex-center py-5 px-7 bg-gray-300 backdrop-blur rounded-full">
-          {videoRef.current.map((_, i) => (
+          {hightlightsSlides.map((_, i) => (
             <span
               key={i}
               className="mx-2 w-3 h-3 bg-gray-200 rounded-full relative cursor-pointer"
-              ref={(el) => (videoDivRef.current[i] = el!)}
+              ref={(el) => {
+                if (el) {
+                  videoDivRef.current[i] = el as HTMLDivElement;
+                }
+              }}
             >
               <span
-                className="absolute h-full w-full rounded-full"
-                ref={(el) => (videoSpanRef.current[i] = el!)}
+                className="absolute h-full w-0 rounded-full bg-white"
+                ref={(el) => {
+                  if (el) {
+                    videoSpanRef.current[i] = el as HTMLSpanElement;
+                  }
+                }}
               />
             </span>
           ))}

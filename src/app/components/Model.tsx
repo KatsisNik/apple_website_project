@@ -1,55 +1,70 @@
-import { useGSAP } from "@gsap/react"
+'use client';
+
+import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import ModelView from "./ModelView";
 import { useEffect, useRef, useState } from "react";
 import { yellowImg } from "@/utils";
-
 import * as THREE from 'three';
 import { Canvas } from "@react-three/fiber";
-import { View } from "@react-three/drei";
 import { models, sizes } from "@/constants";
 import { animateWithGsapTimeline } from "@/utils/animations";
+import { View } from "@react-three/drei";
 
-const Model = () => {
-  const [size, setSize] = useState('small');
-  const [model, setModel] = useState({
+interface ModelState {
+  title: string;
+  color: string[];
+  img: string;
+}
+
+const Model: React.FC = () => {
+  const [size, setSize] = useState<string>('small');
+  const [model, setModel] = useState<ModelState>({
     title: 'iPhone 15 Pro in Natural Titanium',
     color: ['#8F8A81', '#FFE7B9', '#6F6C64'],
     img: yellowImg,
-  })
+  });
+
+  const [eventSource, setEventSource] = useState<HTMLElement | null>(null);
 
   // camera control for the model view
-  const cameraControlSmall = useRef();
-  const cameraControlLarge = useRef();
+  const cameraControlSmall = useRef<any>(null);
+  const cameraControlLarge = useRef<any>(null);
 
   // model
-  const small = useRef(new THREE.Group());
-  const large = useRef(new THREE.Group());
+  const small = useRef<THREE.Group>(new THREE.Group());
+  const large = useRef<THREE.Group>(new THREE.Group());
 
   // rotation
-  const [smallRotation, setSmallRotation] = useState(0);
-  const [largeRotation, setLargeRotation] = useState(0);
+  const [smallRotation, setSmallRotation] = useState<number>(0);
+  const [largeRotation, setLargeRotation] = useState<number>(0);
 
   const tl = gsap.timeline();
 
   useEffect(() => {
-    if(size === 'large') {
+    if (size === 'large') {
       animateWithGsapTimeline(tl, small, smallRotation, '#view1', '#view2', {
         transform: 'translateX(-100%)',
         duration: 2
-      })
+      });
     }
 
-    if(size ==='small') {
+    if (size === 'small') {
       animateWithGsapTimeline(tl, large, largeRotation, '#view2', '#view1', {
         transform: 'translateX(0)',
         duration: 2
-      })
+      });
     }
-  }, [size])
+  }, [size]);
 
   useGSAP(() => {
-    gsap.to('#heading', { y: 0, opacity: 1 })
+    gsap.to('#heading', { y: 0, opacity: 1 });
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setEventSource(document.getElementById('root'));
+    }
   }, []);
 
   return (
@@ -81,20 +96,23 @@ const Model = () => {
               size={size}
             />
 
-            <Canvas
-              className="w-full h-full"
-              style={{
-                position: 'fixed',
-                top: 0,
-                bottom: 0,
-                left: 0,
-                right: 0,
-                overflow: 'hidden'
-              }}
-              eventSource={document.getElementById('root')}
-            >
-              <View.Port />
-            </Canvas>
+            {eventSource && (
+              <Canvas
+                className="w-full h-full"
+                style={{
+                  position: 'fixed',
+                  top: 0,
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  overflow: 'hidden'
+                }}
+                eventSource={eventSource}
+              >
+                <View index={1} />
+                <View index={2} />
+              </Canvas>
+            )}
           </div>
 
           <div className="mx-auto w-full">
@@ -119,7 +137,7 @@ const Model = () => {
         </div>
       </div>
     </section>
-  )
+  );
 }
 
-export default Model
+export default Model;

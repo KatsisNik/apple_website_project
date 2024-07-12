@@ -25,7 +25,7 @@ const Model: React.FC = () => {
     img: yellowImg,
   });
 
-  const [eventSource, setEventSource] = useState<HTMLElement | null>(null);
+  const canvasRef = useRef<HTMLDivElement | null>(null);
 
   // camera control for the model view
   const cameraControlSmall = useRef<any>(null);
@@ -61,12 +61,6 @@ const Model: React.FC = () => {
     gsap.to('#heading', { y: 0, opacity: 1 });
   }, []);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setEventSource(document.getElementById('root'));
-    }
-  }, []);
-
   return (
     <section className="common-padding">
       <div className="screen-max-width">
@@ -75,7 +69,7 @@ const Model: React.FC = () => {
         </h1>
 
         <div className="flex flex-col items-center mt-5">
-          <div className="w-full h-[75vh] md:h-[90vh] overflow-hidden relative">
+          <div className="w-full h-[75vh] md:h-[90vh] overflow-hidden relative" ref={canvasRef}>
             <ModelView 
               index={1}
               groupRef={small}
@@ -96,7 +90,7 @@ const Model: React.FC = () => {
               size={size}
             />
 
-            {eventSource && (
+            {canvasRef.current && (
               <Canvas
                 className="w-full h-full"
                 style={{
@@ -107,7 +101,7 @@ const Model: React.FC = () => {
                   right: 0,
                   overflow: 'hidden'
                 }}
-                eventSource={eventSource}
+                eventSource={canvasRef.current}
               >
                 <View index={1} />
                 <View index={2} />

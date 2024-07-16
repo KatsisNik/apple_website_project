@@ -1,59 +1,63 @@
-import { Html, OrbitControls, PerspectiveCamera, View } from "@react-three/drei";
-import * as THREE from 'three';
-import Lights from './Lights';
-import Loader from './Loader';
-import IPhone from './IPhone';
-import { Suspense } from "react";
+import { models } from '@/constants'
+import { OrbitControls, PerspectiveCamera, View } from '@react-three/drei'
+import * as THREE from 'three'
+import Lights from './Lights'
+import { Suspense } from 'react'
+import IPhone from './IPhone'
+import { OrbitControls as OrbitControlsType } from 'three-stdlib'
+import Loader from './Loader'
 
 interface ModelViewProps {
-  index: number;
-  groupRef: React.MutableRefObject<THREE.Group>;
-  gsapType: string;
-  controlRef: React.MutableRefObject<any>;
-  setRotationState: (rotation: number) => void;
-  size: string;
-  item: {
-    img: string;
-    color: string[];
-  };
+  index: number
+  groupRef: React.MutableRefObject<THREE.Group<THREE.Object3DEventMap>>
+  gsapType: 'view1' | 'view2'
+  controlRef: React.RefObject<OrbitControlsType>
+  setRotationState: React.Dispatch<React.SetStateAction<number>>
+  item: (typeof models)[number]
 }
 
-const ModelView: React.FC<ModelViewProps> = ({ index, groupRef, gsapType, controlRef, setRotationState, size, item }) => {
+export default function ModelView({
+  index,
+  groupRef,
+  gsapType,
+  controlRef,
+  setRotationState,
+  item,
+}: ModelViewProps) {
   return (
     <View
       index={index}
       id={gsapType}
-      className={`w-full h-full absolute ${index === 2 ? 'right-[-100%]' : ''}`}
+      className={`absolute h-full w-full ${index === 2 && 'right-[-100%]'}`}
     >
-      {/* Ambient Light */}
       <ambientLight intensity={0.3} />
 
       <PerspectiveCamera makeDefault position={[0, 0, 4]} />
 
       <Lights />
 
-      <OrbitControls 
+      <OrbitControls
         makeDefault
         ref={controlRef}
         enableZoom={false}
         enablePan={false}
         rotateSpeed={0.4}
         target={new THREE.Vector3(0, 0, 0)}
-        onEnd={() => setRotationState(controlRef.current.getAzimuthalAngle())}
-      /> 
+        onEnd={() => setRotationState(controlRef.current!.getAzimuthalAngle())}
+      />
 
-      <group ref={groupRef} name={index === 1 ? 'small' : 'large'} position={[0, 0, 0]}>
+      <group
+        ref={groupRef}
+        name={index === 1 ? 'small' : 'large'}
+        position={[0, 0, 0]}
+      >
         <Suspense fallback={<Loader />}>
-          <group scale={index === 1 ? [15, 15, 15] : [17, 17, 17]}>
-            <IPhone
-              item={item}
-              size={size}
-            />
-          </group>
+          <IPhone
+            scale={index === 1 ? [15, 15, 15] : [17, 17, 17]}
+            item={item}
+          />
         </Suspense>
       </group>
     </View>
-  );
+  )
 }
-
-export default ModelView;

@@ -1,4 +1,3 @@
-'use client'
 
 import { models, sizes } from '@/constants'
 import { useGSAP } from '@gsap/react'
@@ -32,7 +31,6 @@ export default function Model() {
 
   useEffect(() => {
     setLoadedDocument(document)
-    console.log("model: " + model)
   }, [])
 
   useEffect(() => {

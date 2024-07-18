@@ -4,7 +4,7 @@ import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import React, { useRef } from "react";
 
-export default function () {
+export default function  HowItWorks() {
     const videoRef = useRef<HTMLVideoElement>(null);
 
     useGSAP(() => {

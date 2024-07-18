@@ -30,7 +30,7 @@ export default function ModelView({
       id={gsapType}
       className={`absolute h-full w-full ${index === 2 && 'right-[-100%]'}`}
     >
-      <ambientLight intensity={0.3} />
+      <ambientLight intensity={5} />
 
       <PerspectiveCamera makeDefault position={[0, 0, 4]} />
 
